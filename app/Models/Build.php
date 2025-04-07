@@ -1,29 +1,21 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Models;
 
-use Illuminate\Http\Request;
-use App\Models\Build;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class BuildController extends Controller
+class Build extends Model
 {
-    public function store(Request $request)
-    {
-        $request->validate([
-            'build_number' => 'required|integer|unique:builds',
-            'repository' => 'required|string',
-            'branch' => 'required|string',
-            'commit_hash' => 'required|string',
-            'commit_message' => 'required|string',
-            'status' => 'required|string',
-            'completed_at' => 'nullable|date',
-        ]);
+    use HasFactory;
 
-        $build = Build::create($request->all());
-
-        return response()->json([
-            'message' => 'Build recorded successfully',
-            'data' => $build
-        ], 201);
-    }
+    protected $fillable = [
+        'build_number',
+        'repository',
+        'branch',
+        'commit_hash',
+        'commit_message',
+        'status',
+        'completed_at',
+    ];
 }
