@@ -239,10 +239,10 @@
             new Chart(activityCtx, {
                 type: 'bar',
                 data: {
-                    labels: {{ Js::from($dailyLabels) }},
+                    labels: JSON.parse('{{ json_encode($dailyBuilds) }}'),
                     datasets: [{
                         label: 'Builds',
-                        data: {{ Js::from($dailyBuilds) }},
+                        data: JSON.parse('{{ json_encode($dailyBuilds) }}'),
                         backgroundColor: '#3B82F6', // blue-500
                         borderWidth: 0
                     }]
@@ -266,10 +266,10 @@
             new Chart(branchCtx, {
                 type: 'bar',
                 data: {
-                    labels: {{ Js::from($branches) }},
+                    labels: JSON.parse('{{ json_encode($branches) }}'),
                     datasets: [{
                         label: 'Builds',
-                        data: {{ Js::from($branchBuilds) }},
+                        data: JSON.parse('{{ json_encode($branchBuilds) }}'),
                         backgroundColor: '#8B5CF6', // purple-500
                         borderWidth: 0
                     }]

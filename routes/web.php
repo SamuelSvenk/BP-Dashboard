@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-Route::post('/api/builds', [BuildController::class, 'store']);
-
 // Dashboard route
 Route::get('/dashboard', function () {
     // Get latest builds

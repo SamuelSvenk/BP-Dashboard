@@ -7,44 +7,70 @@ use Illuminate\Http\Request;
 
 class BuildController extends Controller
 {
-    // API endpoint for GitLab CI/CD to send builds
-    public function store(Request $request)
-    {
-        $request->validate([
-            'build_number' => 'required|string|unique:builds',
-            'repository' => 'required|string',
-            'branch' => 'required|string',
-            'commit_hash' => 'required|string',
-            'commit_message' => 'nullable|string',
-            'status' => 'required|in:success,failed,partial,in_progress,queued',
-            'completed_at' => 'nullable|date',
-        ]);
-
-        $build = Build::create($request->all());
-
-        return response()->json([
-            'message' => 'Build recorded successfully',
-            'data' => $build
-        ], 201);
-    }
-
-    //  Page to show past (completed) builds
-    public function pastBuilds()
-    {
-        $builds = Build::whereNotIn('status', ['queued', 'in_progress'])
-                      ->orderBy('completed_at', 'desc')
-                      ->paginate(6);
-        
-        return view('past-builds', compact('builds'));
-    }
-
-    // Page to show current (running) builds
+    /**
+     * Display a listing of current builds.
+     */
     public function currentBuilds()
     {
         $builds = Build::whereIn('status', ['queued', 'in_progress'])
                       ->orderBy('created_at', 'desc')
-                      ->paginate(6);
+                      ->paginate(12);
         
         return view('current-builds', compact('builds'));
+    }
+
+    /**
+     * Display a listing of past builds.
+     */
+    public function pastBuilds()
+    {
+        $builds = Build::whereNotIn('status', ['queued', 'in_progress'])
+                      ->orderBy('completed_at', 'desc')
+                      ->paginate(12);
+        
+        return view('past-builds', compact('builds'));
+    }
+
+    /**
+     * Store a newly created build notification.
+     */
+    public function store(Request $request)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'build_number' => 'required',
+            'repository' => 'required',
+            'branch' => 'required',
+            'commit_hash' => 'required',
+            'status' => 'required|in:success,failed,partial,in_progress,queued',
+            'created_at' => 'nullable|date',
+            'commit_message' => 'nullable|string',
+        ]);
+
+        // Calculate completed_at based on status
+        $completedAt = in_array($request->status, ['success', 'failed', 'partial']) 
+            ? now() 
+            : null;
+
+        // Create a new build
+        $build = Build::updateOrCreate(
+            [
+                'build_number' => $request->build_number,
+                'repository' => $request->repository
+            ],
+            [
+                'branch' => $request->branch,
+                'commit_hash' => $request->commit_hash,
+                'commit_message' => $request->commit_message,
+                'status' => $request->status,
+                'created_at' => $request->created_at ?? now(),
+                'completed_at' => $completedAt
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Build notification received',
+            'build' => $build
+        ], 201);
     }
 }
