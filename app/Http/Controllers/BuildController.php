@@ -45,13 +45,14 @@ class BuildController extends Controller
             'status' => 'required|in:success,failed,partial,in_progress,queued',
             'created_at' => 'nullable|date',
             'commit_message' => 'nullable|string',
+            'logs' => 'nullable|string',  
         ]);
-
+    
         // Calculate completed_at based on status
         $completedAt = in_array($request->status, ['success', 'failed', 'partial']) 
             ? now() 
             : null;
-
+    
         // Create a new build
         $build = Build::updateOrCreate(
             [
@@ -63,17 +64,17 @@ class BuildController extends Controller
                 'commit_hash' => $request->commit_hash,
                 'commit_message' => $request->commit_message,
                 'status' => $request->status,
+                'logs' => $request->logs,  
                 'created_at' => $request->created_at ?? now(),
                 'completed_at' => $completedAt
             ]
         );
-
+    
         return response()->json([
             'message' => 'Build notification received',
             'build' => $build
         ], 201);
     }
-
     /**
      * Update the specified build notification.
      */
@@ -112,5 +113,14 @@ class BuildController extends Controller
             'message' => 'Build notification updated',
             'build' => $build
         ], 200);
+    }
+    
+    /**
+     * Display details for a specific build.
+     */
+    public function show(Build $build)
+    {
+        // Check if the build exists
+        return view('builds.show', compact('build'));
     }
 }

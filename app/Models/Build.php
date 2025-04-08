@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Build extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'build_number',
         'repository',
@@ -16,9 +16,10 @@ class Build extends Model
         'commit_hash',
         'commit_message',
         'status',
+        'logs',  
         'completed_at',
     ];
-    
+
     protected $casts = [
         'completed_at' => 'datetime',
     ];

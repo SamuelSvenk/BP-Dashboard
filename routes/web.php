@@ -88,5 +88,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Build notification endpoint
+Route::get('/builds/{build}', [BuildController::class, 'show'])->name('builds.show')->middleware(['auth', 'verified']);
+
 // Auth routes (login, register, forgot password, etc.)
 require __DIR__.'/auth.php';
