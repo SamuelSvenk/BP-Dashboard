@@ -36,6 +36,7 @@ class BuildsTableSeeder extends Seeder
                 'completed_at' => $completedAt,
                 'created_at' => Carbon::now()->subHours(rand(49, 100)),
                 'updated_at' => $completedAt ?? Carbon::now()->subMinutes(rand(5, 60)),
+                'logs' => 'Build logs for build number 10' . str_pad($i, 2, '0', STR_PAD_LEFT),
             ]);
         }
     }

@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('builds', function (Blueprint $table) {
-            //
+            // Add the logs column after status column
+            $table->longText('logs')->nullable()->after('status');
         });
     }
 
@@ -22,7 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('builds', function (Blueprint $table) {
-            //
+            // Drop the logs column
+            $table->dropColumn('logs');
         });
     }
 };
