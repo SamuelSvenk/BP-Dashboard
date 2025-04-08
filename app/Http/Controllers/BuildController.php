@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Build;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class BuildController extends Controller
 {
@@ -53,21 +54,28 @@ class BuildController extends Controller
             ? now() 
             : null;
     
+        // Prepare build data
+        $data = [
+            'branch' => $request->branch,
+            'commit_hash' => $request->commit_hash,
+            'commit_message' => $request->commit_message,
+            'status' => $request->status,
+            'created_at' => $request->created_at ?? now(),
+            'completed_at' => $completedAt
+        ];
+        
+        // Add logs if the column exists
+        if (Schema::hasColumn('builds', 'logs') && $request->has('logs')) {
+            $data['logs'] = $request->logs;
+        }
+    
         // Create a new build
         $build = Build::updateOrCreate(
             [
                 'build_number' => $request->build_number,
                 'repository' => $request->repository
             ],
-            [
-                'branch' => $request->branch,
-                'commit_hash' => $request->commit_hash,
-                'commit_message' => $request->commit_message,
-                'status' => $request->status,
-                'logs' => $request->logs,  
-                'created_at' => $request->created_at ?? now(),
-                'completed_at' => $completedAt
-            ]
+            $data
         );
     
         return response()->json([
@@ -75,10 +83,10 @@ class BuildController extends Controller
             'build' => $build
         ], 201);
     }
+
     /**
      * Update the specified build notification.
      */
-
     public function update(Request $request)
     {
         // Validate the incoming request
@@ -90,6 +98,7 @@ class BuildController extends Controller
             'status' => 'required|in:success,failed,partial,in_progress,queued',
             'created_at' => 'nullable|date',
             'commit_message' => 'nullable|string',
+            'logs' => 'nullable|string',  // Added logs validation
         ]);
 
         // Calculate completed_at based on status
@@ -97,22 +106,38 @@ class BuildController extends Controller
             ? now() 
             : null;
 
+        // Prepare update data
+        $data = [
+            'branch' => $request->branch,
+            'commit_hash' => $request->commit_hash,
+            'commit_message' => $request->commit_message,
+            'status' => $request->status,
+            'created_at' => $request->created_at ?? now(),
+            'completed_at' => $completedAt
+        ];
+        
+        // Add logs if the column exists
+        if (Schema::hasColumn('builds', 'logs') && $request->has('logs')) {
+            $data['logs'] = $request->logs;
+        }
+
         // Update the build
         $build = Build::where('build_number', $request->build_number)
                       ->where('repository', $request->repository)
-                      ->update([
-                          'branch' => $request->branch,
-                          'commit_hash' => $request->commit_hash,
-                          'commit_message' => $request->commit_message,
-                          'status' => $request->status,
-                          'created_at' => $request->created_at ?? now(),
-                          'completed_at' => $completedAt
-                      ]);
-
+                      ->first();
+        
+        if ($build) {
+            $build->update($data);
+            
+            return response()->json([
+                'message' => 'Build notification updated',
+                'build' => $build
+            ], 200);
+        }
+        
         return response()->json([
-            'message' => 'Build notification updated',
-            'build' => $build
-        ], 200);
+            'message' => 'Build not found',
+        ], 404);
     }
     
     /**
