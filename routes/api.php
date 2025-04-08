@@ -8,5 +8,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Build notification endpoint
+// Build notification endpoint and update for put
 Route::post('/builds', [BuildController::class, 'store']);
+Route::put('/builds', [BuildController::class, 'update']);

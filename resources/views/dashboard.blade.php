@@ -266,7 +266,7 @@
             new Chart(branchCtx, {
                 type: 'bar',
                 data: {
-                    labels: JSON.parse('{{ json_encode($branches) }}'),
+                    labels: JSON.parse('{!! json_encode($branches) !!}'),
                     datasets: [{
                         label: 'Builds',
                         data: JSON.parse('{{ json_encode($branchBuilds) }}'),

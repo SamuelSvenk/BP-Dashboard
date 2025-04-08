@@ -73,4 +73,44 @@ class BuildController extends Controller
             'build' => $build
         ], 201);
     }
+
+    /**
+     * Update the specified build notification.
+     */
+
+    public function update(Request $request)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'build_number' => 'required',
+            'repository' => 'required',
+            'branch' => 'required',
+            'commit_hash' => 'required',
+            'status' => 'required|in:success,failed,partial,in_progress,queued',
+            'created_at' => 'nullable|date',
+            'commit_message' => 'nullable|string',
+        ]);
+
+        // Calculate completed_at based on status
+        $completedAt = in_array($request->status, ['success', 'failed', 'partial']) 
+            ? now() 
+            : null;
+
+        // Update the build
+        $build = Build::where('build_number', $request->build_number)
+                      ->where('repository', $request->repository)
+                      ->update([
+                          'branch' => $request->branch,
+                          'commit_hash' => $request->commit_hash,
+                          'commit_message' => $request->commit_message,
+                          'status' => $request->status,
+                          'created_at' => $request->created_at ?? now(),
+                          'completed_at' => $completedAt
+                      ]);
+
+        return response()->json([
+            'message' => 'Build notification updated',
+            'build' => $build
+        ], 200);
+    }
 }

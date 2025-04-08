@@ -16,9 +16,9 @@
                                 <div>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">Repository: {{ $build->repository }}</p>
                                     <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Branch: {{ $build->branch }}</p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Commit: {{ Str::limit($build->commit_hash, 7) }}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Commit: {{ Str::limit($build->commit_hash, 10) }}</p>
                                     @if ($build->commit_message)
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">{{ $build->commit_message }}</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">Commit Message: {{ $build->commit_message }}</p>
                                     @endif
                                 </div>
                                 <div class="mt-4">
