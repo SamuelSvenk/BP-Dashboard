@@ -1,12 +1,68 @@
+{{-- filepath: /root/blog/resources/views/past-builds.blade.php --}}
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Past builds') }}
-        </h2>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                {{ __('Past builds') }}
+            </h2>
+            
+            <!-- Status Filter -->
+            <div class="flex space-x-2">
+                <a href="{{ route('past-builds') }}" 
+                   class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium
+                   {{ !request()->has('status') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                    All
+                    <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 dark:bg-gray-600">
+                        {{ $counts['all'] }}
+                    </span>
+                </a>
+                
+                <a href="{{ route('past-builds', ['status' => 'success']) }}" 
+                   class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium
+                   {{ request('status') === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                    Success
+                    <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 dark:bg-gray-600">
+                        {{ $counts['success'] }}
+                    </span>
+                </a>
+                
+                <a href="{{ route('past-builds', ['status' => 'failed']) }}"
+                   class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium
+                   {{ request('status') === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                    Failed
+                    <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 dark:bg-gray-600">
+                        {{ $counts['failed'] }}
+                    </span>
+                </a>
+                
+                <a href="{{ route('past-builds', ['status' => 'partial']) }}"
+                   class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium
+                   {{ request('status') === 'partial' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                    Partial
+                    <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 dark:bg-gray-600">
+                        {{ $counts['partial'] }}
+                    </span>
+                </a>
+            </div>
+        </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <!-- Show current filter if active -->
+            @if(request()->has('status'))
+                <div class="mb-4 px-4">
+                    <div class="flex items-center">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mr-2">
+                            Showing {{ request('status') }} builds
+                        </p>
+                        <a href="{{ route('past-builds') }}" class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            Clear filter ×
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse ($builds as $build)
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg h-80 flex flex-col">
@@ -69,7 +125,13 @@
                 @empty
                     <div class="col-span-3 py-12">
                         <div class="text-center text-gray-500 dark:text-gray-400">
-                            <p>No past builds found</p>
+                            <p>
+                                @if(request()->has('status'))
+                                    No {{ request('status') }} builds found
+                                @else
+                                    No past builds found
+                                @endif
+                            </p>
                         </div>
                     </div>
                 @endforelse

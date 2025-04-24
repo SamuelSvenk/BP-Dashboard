@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Build;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB; 
+
 
 class BuildController extends Controller
 {
@@ -21,15 +23,36 @@ class BuildController extends Controller
     }
 
     /**
-     * Display a listing of past builds.
+     * Display a listing of past builds with optional status filtering.
      */
-    public function pastBuilds()
+    public function pastBuilds(Request $request)
     {
-        $builds = Build::whereNotIn('status', ['queued', 'in_progress'])
-                      ->orderBy('completed_at', 'desc')
-                      ->paginate(12);
+        $query = Build::whereNotIn('status', ['queued', 'in_progress']);
         
-        return view('past-builds', compact('builds'));
+        // Apply status filter if provided
+        if ($request->has('status') && in_array($request->status, ['success', 'failed', 'partial'])) {
+            $query->where('status', $request->status);
+        }
+        
+        $builds = $query->orderBy('completed_at', 'desc')
+                    ->paginate(12)
+                    ->withQueryString();
+        
+        // Get counts for each status in a single query
+        $statusCounts = Build::select('status', DB::raw('count(*) as count'))
+                        ->whereNotIn('status', ['queued', 'in_progress'])
+                        ->groupBy('status')
+                        ->pluck('count', 'status')
+                        ->toArray();
+        
+        $counts = [
+            'all' => array_sum($statusCounts),
+            'success' => $statusCounts['success'] ?? 0,
+            'failed' => $statusCounts['failed'] ?? 0,
+            'partial' => $statusCounts['partial'] ?? 0,
+        ];
+        
+        return view('past-builds', compact('builds', 'counts'));
     }
 
     /**
