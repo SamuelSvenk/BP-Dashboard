@@ -1,4 +1,3 @@
-<!-- filepath: /root/blog/resources/views/builds/show.blade.php -->
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
@@ -136,80 +135,108 @@
                         <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Build Logs</h4>
                         
                         @if(isset($build->logs))
-                            <pre class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm font-mono text-gray-900 dark:text-gray-100 overflow-x-auto">{{ $build->logs }}</pre>
-                            
-                            @php
-                                // Extract Accessibility JSON Report
-                                $accessibilityJson = null;
-                                if(preg_match('/Accessibility JSON Report:\s*(\{.*?\}\}\})/s', $build->logs, $matches)) {
-                                    try {
-                                        $accessibilityJson = json_decode($matches[1], true);
-                                    } catch(\Exception $e) {
-                                        // Invalid JSON, ignore
-                                    }
-                                }
-                            @endphp
-                            
-                            @if($accessibilityJson)
-                            <div class="mt-8" x-data="{ activeAccordion: null }">
-                                <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Accessibility Report</h4>
-                                
-                                <div class="mb-4 flex space-x-4">
-                                    <div class="px-4 py-2 bg-white dark:bg-gray-700 rounded shadow text-center flex-1">
-                                        <div class="text-xl font-bold">{{ $accessibilityJson['total'] }}</div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Tests</div>
-                                    </div>
-                                    <div class="px-4 py-2 bg-white dark:bg-gray-700 rounded shadow text-center flex-1">
-                                        <div class="text-xl font-bold text-green-600 dark:text-green-400">{{ $accessibilityJson['passes'] }}</div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Passes</div>
-                                    </div>
-                                    <div class="px-4 py-2 bg-white dark:bg-gray-700 rounded shadow text-center flex-1">
-                                        <div class="text-xl font-bold text-red-600 dark:text-red-400">{{ $accessibilityJson['errors'] }}</div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Errors</div>
-                                    </div>
-                                </div>
-                                
-                                @foreach($accessibilityJson['results'] as $url => $issues)
-                                    <div class="mb-2 border dark:border-gray-700 rounded-lg overflow-hidden">
-                                        <button 
-                                            @click="activeAccordion === '{{ $url }}' ? activeAccordion = null : activeAccordion = '{{ $url }}'"
-                                            class="w-full px-4 py-3 text-left bg-white dark:bg-gray-750 flex justify-between items-center"
-                                        >
-                                            <span class="font-medium text-gray-900 dark:text-gray-100">{{ $url }}</span>
-                                            <svg xmlns="http://www.w3.org/2000/svg" :class="activeAccordion === '{{ $url }}' ? 'transform rotate-180' : ''" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
+                            <div class="bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono text-gray-900 dark:text-gray-100 overflow-hidden">
+                                <div class="log-container p-4 overflow-x-auto">
+                                    @php
+                                        $logs = $build->logs;
                                         
-                                        <div x-show="activeAccordion === '{{ $url }}'" x-transition class="border-t dark:border-gray-700 p-4">
-                                            @foreach($issues as $index => $issue)
-                                                <div class="mb-3 {{ $index > 0 ? 'pt-3 border-t dark:border-gray-700' : '' }}">
-                                                    <div class="flex items-center mb-2">
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $issue['type'] == 'error' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' }}">
-                                                            {{ ucfirst($issue['type']) }}
-                                                        </span>
-                                                        <span class="ml-2 text-sm text-gray-500">{{ $issue['code'] }}</span>
-                                                    </div>
-                                                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $issue['message'] }}</p>
-                                                    @if(isset($issue['context']))
-                                                        <div class="mt-2">
-                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Context:</p>
-                                                            <pre class="bg-gray-50 dark:bg-gray-800 p-2 rounded text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto">{{ htmlspecialchars($issue['context']) }}</pre>
-                                                        </div>
-                                                    @endif
-                                                    @if(isset($issue['selector']))
-                                                        <div class="mt-2">
-                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Selector:</p>
-                                                            <code class="bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded text-xs text-gray-700 dark:text-gray-300">{{ $issue['selector'] }}</code>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endforeach
+                                        // Format section headers (without emojis)
+                                        $patterns = [
+                                            '/Build start log generated at (.+)/i',
+                                            '/Build completed at (.+)/i',
+                                            '/Tests completed at (.+)/i',
+                                            '/Accessibility testing completed at (.+)/i',
+                                            '/Deployment completed at (.+)/i',
+                                            '/Final log generated at (.+)/i',
+                                        ];
+                                        
+                                        $replacements = [
+                                            '<div class="log-section"><span class="text-blue-600 dark:text-blue-400 font-semibold">Build Started</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
+                                            '<div class="log-section mt-4"><span class="text-green-600 dark:text-green-400 font-semibold">Build Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
+                                            '<div class="log-section mt-4"><span class="text-yellow-600 dark:text-yellow-400 font-semibold">Tests Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
+                                            '<div class="log-section mt-4"><span class="text-purple-600 dark:text-purple-400 font-semibold">Accessibility Testing Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
+                                            '<div class="log-section mt-4"><span class="text-indigo-600 dark:text-indigo-400 font-semibold">Deployment Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
+                                            '<div class="log-section mt-4"><span class="text-pink-600 dark:text-pink-400 font-semibold">Final Log Generated</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
+                                        ];
+                                        
+                                        // Format JSON for accessibility report
+                                        if(preg_match('/Accessibility JSON Report:\s*({.+})/s', $logs, $matches)) {
+                                            try {
+                                                $json = $matches[1];
+                                                $jsonData = json_decode($json, true);
+                                                
+                                                if($jsonData) {
+                                                    $jsonHTML = '<div class="mt-2 p-3 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600">';
+                                                    $jsonHTML .= '<div class="flex items-center gap-2 mb-2">';
+                                                    $jsonHTML .= '<h5 class="font-semibold">Accessibility Summary:</h5>';
+                                                    
+                                                    // Summary badges with colored text instead of background
+                                                    $jsonHTML .= '<span class="px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">Total: ' . $jsonData['total'] . '</span>';
+                                                    $jsonHTML .= '<span class="px-2 py-1 text-xs font-semibold text-green-700 dark:text-green-400">Passes: ' . $jsonData['passes'] . '</span>';
+                                                    $jsonHTML .= '<span class="px-2 py-1 text-xs font-semibold text-red-700 dark:text-red-400">Errors: ' . $jsonData['errors'] . '</span>';
+                                                    $jsonHTML .= '</div>';
+                                                    
+                                                    if(isset($jsonData['results']) && is_array($jsonData['results'])) {
+                                                        foreach($jsonData['results'] as $url => $issues) {
+                                                            $jsonHTML .= '<div class="mb-2">';
+                                                            $jsonHTML .= '<h6 class="font-medium text-xs mb-1">URL: <span class="font-normal">' . htmlspecialchars($url) . '</span></h6>';
+                                                            
+                                                            foreach($issues as $issue) {
+                                                                $jsonHTML .= '<div class="ml-4 mb-4 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">';
+                                                                $jsonHTML .= '<div class="flex items-center gap-1">';
+                                                                $jsonHTML .= '<span class="inline-block w-2 h-2 rounded-full ' . ($issue['type'] == 'error' ? 'bg-red-500' : 'bg-yellow-500') . '"></span>';
+                                                                $jsonHTML .= '<span class="font-medium">' . htmlspecialchars($issue['code']) . '</span>';
+                                                                $jsonHTML .= '</div>';
+                                                                $jsonHTML .= '<p class="ml-3 mt-1">' . htmlspecialchars($issue['message']) . '</p>';
+                                                                $jsonHTML .= '<div class="ml-3 mt-1 mb-1 font-medium text-xs">Element:</div>';
+                                                                $jsonHTML .= '<div class="ml-3 p-2 bg-gray-100 dark:bg-gray-600 rounded overflow-x-auto break-all">';
+                                                                $jsonHTML .= '<code class="text-xs whitespace-pre-wrap">' . htmlspecialchars($issue['context']) . '</code>';
+                                                                $jsonHTML .= '</div>';
+                                                                $jsonHTML .= '<div class="ml-3 mt-1 mb-1 font-medium text-xs">Selector:</div>';
+                                                                $jsonHTML .= '<div class="ml-3 p-2 bg-gray-100 dark:bg-gray-600 rounded overflow-x-auto">';
+                                                                $jsonHTML .= '<code class="text-xs">' . htmlspecialchars($issue['selector']) . '</code>';
+                                                                $jsonHTML .= '</div>';
+                                                                $jsonHTML .= '</div>';
+                                                            }
+                                                            
+                                                            $jsonHTML .= '</div>';
+                                                        }
+                                                    }
+                                                    
+                                                    $jsonHTML .= '</div>';
+                                                    
+                                                    $logs = preg_replace('/Accessibility JSON Report:\s*({.+})/s', 'Accessibility JSON Report: ' . $jsonHTML, $logs);
+                                                }
+                                            } catch(\Exception $e) {
+                                                // If JSON parsing fails, keep the original
+                                            }
+                                        }
+                                        
+                                        // Apply all formatting replacements
+                                        $logs = preg_replace($patterns, $replacements, $logs);
+                                        
+                                        // Format key-value pairs in the logs
+                                        $logs = preg_replace('/(Repository|Branch|Commit|Commit Message): (.+)/', '<span class="text-gray-600 dark:text-gray-400">$1:</span> <span class="font-medium">$2</span>', $logs);
+                                        
+                                        // Highlight success/failure messages
+                                        $logs = preg_replace('/(completed successfully|Passed)/', '<span class="text-green-600 dark:text-green-400 font-medium">$1</span>', $logs);
+                                        $logs = preg_replace('/(failed)/i', '<span class="text-red-600 dark:text-red-400 font-medium">$1</span>', $logs);
+                                        
+                                        // Echo the formatted logs
+                                        echo $logs;
+                                    @endphp
+                                </div>
                             </div>
-                            @endif
+                            <style>
+                                .log-section {
+                                    padding: 6px 0;
+                                    border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+                                }
+                                .log-container code {
+                                    word-break: break-all;
+                                    white-space: pre-wrap;
+                                }
+                            </style>
                         @else
                             <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm text-gray-500 dark:text-gray-400">
                                 No build logs available.
@@ -220,11 +247,4 @@
             </div>
         </div>
     </div>
-
-    @if(isset($accessibilityJson))
-    <script>
-        document.addEventListener('alpine:init', function() {
-        });
-    </script>
-    @endif
 </x-app-layout>
