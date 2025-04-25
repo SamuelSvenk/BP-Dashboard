@@ -1,3 +1,4 @@
+<!-- filepath: /root/blog/resources/views/builds/show.blade.php -->
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
@@ -136,6 +137,79 @@
                         
                         @if(isset($build->logs))
                             <pre class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm font-mono text-gray-900 dark:text-gray-100 overflow-x-auto">{{ $build->logs }}</pre>
+                            
+                            @php
+                                // Extract Accessibility JSON Report
+                                $accessibilityJson = null;
+                                if(preg_match('/Accessibility JSON Report:\s*(\{.*?\}\}\})/s', $build->logs, $matches)) {
+                                    try {
+                                        $accessibilityJson = json_decode($matches[1], true);
+                                    } catch(\Exception $e) {
+                                        // Invalid JSON, ignore
+                                    }
+                                }
+                            @endphp
+                            
+                            @if($accessibilityJson)
+                            <div class="mt-8" x-data="{ activeAccordion: null }">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Accessibility Report</h4>
+                                
+                                <div class="mb-4 flex space-x-4">
+                                    <div class="px-4 py-2 bg-white dark:bg-gray-700 rounded shadow text-center flex-1">
+                                        <div class="text-xl font-bold">{{ $accessibilityJson['total'] }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Tests</div>
+                                    </div>
+                                    <div class="px-4 py-2 bg-white dark:bg-gray-700 rounded shadow text-center flex-1">
+                                        <div class="text-xl font-bold text-green-600 dark:text-green-400">{{ $accessibilityJson['passes'] }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Passes</div>
+                                    </div>
+                                    <div class="px-4 py-2 bg-white dark:bg-gray-700 rounded shadow text-center flex-1">
+                                        <div class="text-xl font-bold text-red-600 dark:text-red-400">{{ $accessibilityJson['errors'] }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Errors</div>
+                                    </div>
+                                </div>
+                                
+                                @foreach($accessibilityJson['results'] as $url => $issues)
+                                    <div class="mb-2 border dark:border-gray-700 rounded-lg overflow-hidden">
+                                        <button 
+                                            @click="activeAccordion === '{{ $url }}' ? activeAccordion = null : activeAccordion = '{{ $url }}'"
+                                            class="w-full px-4 py-3 text-left bg-white dark:bg-gray-750 flex justify-between items-center"
+                                        >
+                                            <span class="font-medium text-gray-900 dark:text-gray-100">{{ $url }}</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" :class="activeAccordion === '{{ $url }}' ? 'transform rotate-180' : ''" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                        
+                                        <div x-show="activeAccordion === '{{ $url }}'" x-transition class="border-t dark:border-gray-700 p-4">
+                                            @foreach($issues as $index => $issue)
+                                                <div class="mb-3 {{ $index > 0 ? 'pt-3 border-t dark:border-gray-700' : '' }}">
+                                                    <div class="flex items-center mb-2">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $issue['type'] == 'error' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' }}">
+                                                            {{ ucfirst($issue['type']) }}
+                                                        </span>
+                                                        <span class="ml-2 text-sm text-gray-500">{{ $issue['code'] }}</span>
+                                                    </div>
+                                                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $issue['message'] }}</p>
+                                                    @if(isset($issue['context']))
+                                                        <div class="mt-2">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Context:</p>
+                                                            <pre class="bg-gray-50 dark:bg-gray-800 p-2 rounded text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto">{{ htmlspecialchars($issue['context']) }}</pre>
+                                                        </div>
+                                                    @endif
+                                                    @if(isset($issue['selector']))
+                                                        <div class="mt-2">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Selector:</p>
+                                                            <code class="bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded text-xs text-gray-700 dark:text-gray-300">{{ $issue['selector'] }}</code>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            @endif
                         @else
                             <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm text-gray-500 dark:text-gray-400">
                                 No build logs available.
@@ -146,4 +220,11 @@
             </div>
         </div>
     </div>
+
+    @if(isset($accessibilityJson))
+    <script>
+        document.addEventListener('alpine:init', function() {
+        });
+    </script>
+    @endif
 </x-app-layout>
