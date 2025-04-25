@@ -171,7 +171,12 @@
                                                     </div>
                                                 </div>
                                                 <div id="iframe-container-{{ $index }}" class="hidden">
-                                                    <iframe id="iframe-{{ $index }}" src="{{ $link }}" class="w-full h-[500px] border-0"></iframe>
+                                                    <div class="bg-gray-50 dark:bg-gray-700 p-4 text-center">
+                                                        <p class="mb-4">Preview not available. External site cannot be embedded.</p>
+                                                        <a href="{{ $link }}" target="_blank" class="inline-block text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">
+                                                            Open in New Tab to View
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
