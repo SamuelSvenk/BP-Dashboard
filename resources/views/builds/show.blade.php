@@ -130,12 +130,67 @@
                         </div>
                     </div>
                     
-                    <!-- Build Logs (optional, if you store logs) -->
+                    <!-- Build Logs -->
                     <div class="mt-8">
                         <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Build Logs</h4>
                         
                         @if(isset($build->logs))
                             <pre class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm font-mono text-gray-900 dark:text-gray-100 overflow-x-auto">{{ $build->logs }}</pre>
+                            
+                            @php
+                                // Extract HTML links from logs using regex
+                                preg_match_all('/(https?:\/\/[^\s]+\.html)/i', $build->logs, $matches);
+                                $htmlLinks = $matches[0] ?? [];
+                            @endphp
+                            
+                            @if(count($htmlLinks) > 0)
+                                <div class="mt-8">
+                                    <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">HTML Preview</h4>
+                                    
+                                    <div class="space-y-6">
+                                        @foreach($htmlLinks as $index => $link)
+                                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                                <div class="bg-gray-50 dark:bg-gray-750 p-4 flex justify-between items-center">
+                                                    <div class="flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                        </svg>
+                                                        <a href="{{ $link }}" target="_blank" class="font-medium text-blue-600 dark:text-blue-400 hover:underline truncate max-w-md">
+                                                            {{ $link }}
+                                                        </a>
+                                                    </div>
+                                                    <div class="flex items-center space-x-2">
+                                                        <button 
+                                                            onclick="toggleIframe('iframe-{{ $index }}')"
+                                                            class="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition">
+                                                            Toggle Preview
+                                                        </button>
+                                                        <a href="{{ $link }}" target="_blank" class="text-sm bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded transition">
+                                                            Open in New Tab
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div id="iframe-container-{{ $index }}" class="hidden">
+                                                    <iframe id="iframe-{{ $index }}" src="{{ $link }}" class="w-full h-[500px] border-0"></iframe>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                
+                                <script>
+                                    function toggleIframe(iframeId) {
+                                        const containerId = iframeId.replace('iframe-', 'iframe-container-');
+                                        const container = document.getElementById(containerId);
+                                        
+                                        if (container.classList.contains('hidden')) {
+                                            container.classList.remove('hidden');
+                                        } else {
+                                            container.classList.add('hidden');
+                                        }
+                                    }
+                                </script>
+                            @endif
                         @else
                             <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm text-gray-500 dark:text-gray-400">
                                 No build logs available.
