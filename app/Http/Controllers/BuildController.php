@@ -108,39 +108,21 @@ class BuildController extends Controller
     }
 
     /**
-     * Update the specified build notification.
+     * Update an existing build by build number.
      */
-    public function update(Request $request, Build $build)
+    public function updateByBuildNumber(Request $request, $buildNumber)
     {
-        // Validate the incoming request
-        $validated = $request->validate([
-            'branch' => 'nullable',
-            'commit_hash' => 'nullable', 
-            'status' => 'nullable|in:success,failed,partial,in_progress,queued',
-            'commit_message' => 'nullable|string',
-            'logs' => 'nullable|string',
-        ]);
-
-        // Calculate completed_at based on status if status is being updated
-        if ($request->has('status') && in_array($request->status, ['success', 'failed', 'partial']) && $build->status !== $request->status) {
-            $build->completed_at = now();
+        $build = Build::where('build_number', $buildNumber)->first();
+        
+        if (!$build) {
+            // Create a new build if it doesn't exist
+            return $this->store($request);
         }
         
-        // Update only the fields that were provided
-        $build->fill($request->only([
-            'branch',
-            'commit_hash',
-            'commit_message',
-            'status',
-            'logs'
-        ]));
+        // Update the existing build
+        $build->update($request->all());
         
-        $build->save();
-        
-        return response()->json([
-            'message' => 'Build notification updated',
-            'build' => $build
-        ], 200);
+        return response()->json($build);
     }
     
     /**
