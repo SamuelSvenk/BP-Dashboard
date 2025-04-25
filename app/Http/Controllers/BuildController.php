@@ -110,57 +110,37 @@ class BuildController extends Controller
     /**
      * Update the specified build notification.
      */
-    public function update(Request $request)
+    public function update(Request $request, Build $build)
     {
         // Validate the incoming request
         $validated = $request->validate([
-            'build_number' => 'required',
-            'repository' => 'required',
-            'branch' => 'required',
-            'commit_hash' => 'required',
-            'status' => 'required|in:success,failed,partial,in_progress,queued',
-            'created_at' => 'nullable|date',
+            'branch' => 'nullable',
+            'commit_hash' => 'nullable', 
+            'status' => 'nullable|in:success,failed,partial,in_progress,queued',
             'commit_message' => 'nullable|string',
-            'logs' => 'nullable|string',  // Added logs validation
+            'logs' => 'nullable|string',
         ]);
 
-        // Calculate completed_at based on status
-        $completedAt = in_array($request->status, ['success', 'failed', 'partial']) 
-            ? now() 
-            : null;
-
-        // Prepare update data
-        $data = [
-            'branch' => $request->branch,
-            'commit_hash' => $request->commit_hash,
-            'commit_message' => $request->commit_message,
-            'status' => $request->status,
-            'created_at' => $request->created_at ?? now(),
-            'completed_at' => $completedAt
-        ];
-        
-        // Add logs if the column exists
-        if (Schema::hasColumn('builds', 'logs') && $request->has('logs')) {
-            $data['logs'] = $request->logs;
+        // Calculate completed_at based on status if status is being updated
+        if ($request->has('status') && in_array($request->status, ['success', 'failed', 'partial']) && $build->status !== $request->status) {
+            $build->completed_at = now();
         }
-
-        // Update the build
-        $build = Build::where('build_number', $request->build_number)
-                      ->where('repository', $request->repository)
-                      ->first();
         
-        if ($build) {
-            $build->update($data);
-            
-            return response()->json([
-                'message' => 'Build notification updated',
-                'build' => $build
-            ], 200);
-        }
+        // Update only the fields that were provided
+        $build->fill($request->only([
+            'branch',
+            'commit_hash',
+            'commit_message',
+            'status',
+            'logs'
+        ]));
+        
+        $build->save();
         
         return response()->json([
-            'message' => 'Build not found',
-        ], 404);
+            'message' => 'Build notification updated',
+            'build' => $build
+        ], 200);
     }
     
     /**
