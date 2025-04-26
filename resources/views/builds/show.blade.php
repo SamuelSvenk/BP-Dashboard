@@ -258,9 +258,11 @@
                                                             $valueClass = '';
                                                             $targetIcon = '';
                                                             $targetText = isset($metric['desiredSize']) ? ($metric['desiredSize'] == 'smaller' ? 'Lower is better' : 'Higher is better') : '';
+                                                            $formattedValue = $metric['value'] ?? '';
                                                             
+                                                            // Format value with appropriate units
                                                             if($metric['name'] == 'Total Score') {
-                                                                $score = intval($metric['value']);
+                                                                $score = intval($formattedValue);
                                                                 if($score >= 90) {
                                                                     $valueClass = 'text-green-600 dark:text-green-400 font-medium';
                                                                     $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>';
@@ -274,6 +276,17 @@
                                                                     $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>';
                                                                 }
                                                             } else {
+                                                                // Add units based on metric name
+                                                                if(in_array($metric['name'], ['Speed Index', 'First Contentful Paint', 'Largest Contentful Paint', 'Total Blocking Time'])) {
+                                                                    $formattedValue .= 'ms';
+                                                                } elseif(in_array($metric['name'], ['Transfer Size'])) {
+                                                                    // Check if KB already exists in the value
+                                                                    if(strpos($formattedValue, 'KB') === false && strpos($formattedValue, 'MB') === false) {
+                                                                        $sizeInKB = floatval($formattedValue) / 1024;
+                                                                        $formattedValue = number_format($sizeInKB, 1) . 'KB';
+                                                                    }
+                                                                }
+                                                                
                                                                 if(isset($metric['desiredSize']) && $metric['desiredSize'] == 'smaller') {
                                                                     $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>';
                                                                 } else {
@@ -283,7 +296,7 @@
                                                         @endphp
                                                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
                                                             <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{{ htmlspecialchars($metric['name'] ?? '') }}</td>
-                                                            <td class="px-4 py-3 text-sm {{ $valueClass }} text-gray-800 dark:text-gray-200">{{ htmlspecialchars($metric['value'] ?? '') }}</td>
+                                                            <td class="px-4 py-3 text-sm {{ $valueClass }} text-gray-800 dark:text-gray-200">{{ htmlspecialchars($formattedValue) }}</td>
                                                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 flex items-center">
                                                                 {!! $targetIcon !!}
                                                                 <span class="ml-1">{{ $targetText }}</span>
