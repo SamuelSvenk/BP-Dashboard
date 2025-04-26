@@ -294,7 +294,7 @@
                                                                 }
                                                             }
                                                         @endphp
-                                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+                                                        <tr class="bg-white dark:bg-gray-800">
                                                             <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{{ htmlspecialchars($metric['name'] ?? '') }}</td>
                                                             <td class="px-4 py-3 text-sm {{ $valueClass }} text-gray-800 dark:text-gray-200">{{ htmlspecialchars($formattedValue) }}</td>
                                                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 flex items-center">
