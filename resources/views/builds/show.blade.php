@@ -43,8 +43,8 @@
                     </div>
                 </div>
 
-                <!-- Build Information -->
                 <div class="p-6">
+                    <!-- Build Information -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Left Column -->
                         <div>
@@ -130,118 +130,184 @@
                         </div>
                     </div>
                     
-                    <!-- Build Logs -->
-                    <div class="mt-8">
-                        <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Build Logs</h4>
+                    @php
+                        // Get the logs from build
+                        $logs = $build->logs ?? 'No logs available.';
+                        $accessibilityJson = null;
+                        $performanceJson = null;
                         
-                        @if(isset($build->logs))
-                            <div class="bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono text-gray-900 dark:text-gray-100 overflow-hidden">
-                                <div class="log-container p-4 overflow-x-auto">
-                                    @php
-                                        $logs = $build->logs;
-                                        
-                                        // Format section headers (without emojis)
-                                        $patterns = [
-                                            '/Build start log generated at (.+)/i',
-                                            '/Build completed at (.+)/i',
-                                            '/Tests completed at (.+)/i',
-                                            '/Accessibility testing completed at (.+)/i',
-                                            '/Deployment completed at (.+)/i',
-                                            '/Final log generated at (.+)/i',
-                                        ];
-                                        
-                                        $replacements = [
-                                            '<div class="log-section"><span class="text-blue-600 dark:text-blue-400 font-semibold">Build Started</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
-                                            '<div class="log-section mt-4"><span class="text-green-600 dark:text-green-400 font-semibold">Build Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
-                                            '<div class="log-section mt-4"><span class="text-yellow-600 dark:text-yellow-400 font-semibold">Tests Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
-                                            '<div class="log-section mt-4"><span class="text-purple-600 dark:text-purple-400 font-semibold">Accessibility Testing Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
-                                            '<div class="log-section mt-4"><span class="text-indigo-600 dark:text-indigo-400 font-semibold">Deployment Completed</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
-                                            '<div class="log-section mt-4"><span class="text-pink-600 dark:text-pink-400 font-semibold">Final Log Generated</span> <span class="text-gray-600 dark:text-gray-400">$1</span></div>',
-                                        ];
-                                        
-                                        // Format JSON for accessibility report
-                                        if(preg_match('/Accessibility JSON Report:\s*({.+})/s', $logs, $matches)) {
-                                            try {
-                                                $json = $matches[1];
-                                                $jsonData = json_decode($json, true);
-                                                
-                                                if($jsonData) {
-                                                    $jsonHTML = '<div class="mt-2 p-3 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600">';
-                                                    $jsonHTML .= '<div class="flex items-center gap-2 mb-2">';
-                                                    $jsonHTML .= '<h5 class="font-semibold">Accessibility Summary:</h5>';
-                                                    
-                                                    // Summary badges with colored text instead of background
-                                                    $jsonHTML .= '<span class="px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">Total: ' . $jsonData['total'] . '</span>';
-                                                    $jsonHTML .= '<span class="px-2 py-1 text-xs font-semibold text-green-700 dark:text-green-400">Passes: ' . $jsonData['passes'] . '</span>';
-                                                    $jsonHTML .= '<span class="px-2 py-1 text-xs font-semibold text-red-700 dark:text-red-400">Errors: ' . $jsonData['errors'] . '</span>';
-                                                    $jsonHTML .= '</div>';
-                                                    
-                                                    if(isset($jsonData['results']) && is_array($jsonData['results'])) {
-                                                        foreach($jsonData['results'] as $url => $issues) {
-                                                            $jsonHTML .= '<div class="mb-2">';
-                                                            $jsonHTML .= '<h6 class="font-medium text-xs mb-1">URL: <span class="font-normal">' . htmlspecialchars($url) . '</span></h6>';
-                                                            
-                                                            foreach($issues as $issue) {
-                                                                $jsonHTML .= '<div class="ml-4 mb-4 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">';
-                                                                $jsonHTML .= '<div class="flex items-center gap-1">';
-                                                                $jsonHTML .= '<span class="inline-block w-2 h-2 rounded-full ' . ($issue['type'] == 'error' ? 'bg-red-500' : 'bg-yellow-500') . '"></span>';
-                                                                $jsonHTML .= '<span class="font-medium">' . htmlspecialchars($issue['code']) . '</span>';
-                                                                $jsonHTML .= '</div>';
-                                                                $jsonHTML .= '<p class="ml-3 mt-1">' . htmlspecialchars($issue['message']) . '</p>';
-                                                                $jsonHTML .= '<div class="ml-3 mt-1 mb-1 font-medium text-xs">Element:</div>';
-                                                                $jsonHTML .= '<div class="ml-3 p-2 bg-gray-100 dark:bg-gray-600 rounded overflow-x-auto break-all">';
-                                                                $jsonHTML .= '<code class="text-xs whitespace-pre-wrap">' . htmlspecialchars($issue['context']) . '</code>';
-                                                                $jsonHTML .= '</div>';
-                                                                $jsonHTML .= '<div class="ml-3 mt-1 mb-1 font-medium text-xs">Selector:</div>';
-                                                                $jsonHTML .= '<div class="ml-3 p-2 bg-gray-100 dark:bg-gray-600 rounded overflow-x-auto">';
-                                                                $jsonHTML .= '<code class="text-xs">' . htmlspecialchars($issue['selector']) . '</code>';
-                                                                $jsonHTML .= '</div>';
-                                                                $jsonHTML .= '</div>';
-                                                            }
-                                                            
-                                                            $jsonHTML .= '</div>';
-                                                        }
-                                                    }
-                                                    
-                                                    $jsonHTML .= '</div>';
-                                                    
-                                                    $logs = preg_replace('/Accessibility JSON Report:\s*({.+})/s', 'Accessibility JSON Report: ' . $jsonHTML, $logs);
-                                                }
-                                            } catch(\Exception $e) {
-                                                // If JSON parsing fails, keep the original
-                                            }
-                                        }
-                                        
-                                        // Apply all formatting replacements
-                                        $logs = preg_replace($patterns, $replacements, $logs);
-                                        
-                                        // Format key-value pairs in the logs
-                                        $logs = preg_replace('/(Repository|Branch|Commit|Commit Message): (.+)/', '<span class="text-gray-600 dark:text-gray-400">$1:</span> <span class="font-medium">$2</span>', $logs);
-                                        
-                                        // Highlight success/failure messages
-                                        $logs = preg_replace('/(completed successfully|Passed)/', '<span class="text-green-600 dark:text-green-400 font-medium">$1</span>', $logs);
-                                        $logs = preg_replace('/(failed)/i', '<span class="text-red-600 dark:text-red-400 font-medium">$1</span>', $logs);
-                                        
-                                        // Echo the formatted logs
-                                        echo $logs;
-                                    @endphp
+                        // Extract JSON reports from logs without modifying the original display
+                        if(preg_match('/Accessibility JSON Report:\s*({.+?})\s*\n/s', $logs, $accessMatches)) {
+                            try {
+                                $accessibilityJson = json_decode($accessMatches[1], true);
+                            } catch(\Exception $e) {
+                                // Silent failure
+                            }
+                        }
+                        
+                        if(preg_match('/Performance JSON Report:\s*(\[.+?\])\s*\n/s', $logs, $perfMatches)) {
+                            try {
+                                $performanceJson = json_decode($perfMatches[1], true);
+                            } catch(\Exception $e) {
+                                // Silent failure
+                            }
+                        }
+                        
+                        // Only add line breaks and preserving plain text formatting
+                        $formattedLogs = nl2br(htmlspecialchars($logs));
+                    @endphp
+                    
+                    <!-- Accessibility Report Section -->
+                    @if($accessibilityJson)
+                    <div class="mt-8">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Accessibility Report</h4>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow">
+                            <!-- Summary -->
+                            <div class="flex flex-wrap gap-4 mb-4">
+                                <div class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                    <span class="text-gray-800 dark:text-gray-100">Total:</span> 
+                                    <span class="font-medium">{{ $accessibilityJson['total'] ?? 0 }}</span>
+                                </div>
+                                <div class="px-3 py-1 bg-green-100 dark:bg-green-800 rounded-full">
+                                    <span class="text-green-800 dark:text-green-100">Passes:</span> 
+                                    <span class="font-medium">{{ $accessibilityJson['passes'] ?? 0 }}</span>
+                                </div>
+                                <div class="px-3 py-1 bg-red-100 dark:bg-red-800 rounded-full">
+                                    <span class="text-red-800 dark:text-red-100">Errors:</span> 
+                                    <span class="font-medium">{{ $accessibilityJson['errors'] ?? 0 }}</span>
                                 </div>
                             </div>
-                            <style>
-                                .log-section {
-                                    padding: 6px 0;
-                                    border-bottom: 1px solid rgba(156, 163, 175, 0.2);
-                                }
-                                .log-container code {
-                                    word-break: break-all;
-                                    white-space: pre-wrap;
-                                }
-                            </style>
-                        @else
-                            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm text-gray-500 dark:text-gray-400">
-                                No build logs available.
-                            </div>
-                        @endif
+                            
+                            <!-- Issues by URL -->
+                            @if(isset($accessibilityJson['results']) && is_array($accessibilityJson['results']))
+                                @foreach($accessibilityJson['results'] as $url => $issues)
+                                    <div class="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                        <h5 class="font-medium mb-3 text-gray-900 dark:text-gray-100">
+                                            URL: <span class="font-normal">{{ htmlspecialchars($url) }}</span>
+                                        </h5>
+                                        
+                                        @if(is_array($issues) && count($issues) > 0)
+                                            <div class="space-y-4">
+                                            @foreach($issues as $issue)
+                                                <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md shadow-sm">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="inline-block w-3 h-3 rounded-full 
+                                                            {{ isset($issue['type']) && $issue['type'] == 'error' ? 'bg-red-500' : 'bg-yellow-500' }}">
+                                                        </span>
+                                                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ $issue['code'] ?? 'Unknown Issue' }}</span>
+                                                    </div>
+                                                    
+                                                    <p class="mb-3 text-sm text-gray-800 dark:text-gray-200">{{ $issue['message'] ?? '' }}</p>
+                                                    
+                                                    @if(isset($issue['context']))
+                                                        <div class="mb-2">
+                                                            <span class="text-xs font-medium text-gray-800 dark:text-gray-200">Element:</span>
+                                                            <pre class="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto text-gray-800 dark:text-gray-200">{{ $issue['context'] ? htmlspecialchars_decode(htmlspecialchars($issue['context'])) : '' }}</pre>
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    @if(isset($issue['selector']))
+                                                        <div>
+                                                            <span class="text-xs font-medium text-gray-800 dark:text-gray-200">Selector:</span>
+                                                            <pre class="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto text-gray-800 dark:text-gray-200">{!! htmlspecialchars($issue['selector']) !!}</pre>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-gray-800 dark:text-gray-200">No issues found for this URL.</p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <!-- Performance Report Section -->
+                    @if($performanceJson && is_array($performanceJson))
+                    <div class="mt-8">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Performance Report</h4>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow">
+                            @foreach($performanceJson as $pageData)
+                                <div class="mb-6 {{ !$loop->first ? 'border-t border-gray-200 dark:border-gray-700 pt-4' : '' }}">
+                                    <h5 class="font-medium mb-3 text-gray-900 dark:text-gray-100">
+                                        Page: <span class="font-normal">
+                                            @if(isset($pageData['subject']) && !empty($pageData['subject']))
+                                                {{ $pageData['subject'] === '/' ? 'Homepage' : htmlspecialchars($pageData['subject']) }}
+                                            @else
+                                                Unknown
+                                            @endif
+                                        </span>
+                                    </h5>
+                                    
+                                    @if(isset($pageData['metrics']) && is_array($pageData['metrics']))
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700">
+                                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                                    <tr>
+                                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-800 dark:text-gray-200 uppercase tracking-wider">Metric</th>
+                                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-800 dark:text-gray-200 uppercase tracking-wider">Value</th>
+                                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-800 dark:text-gray-200 uppercase tracking-wider">Target</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                                    @foreach($pageData['metrics'] as $metric)
+                                                        @php
+                                                            $valueClass = '';
+                                                            $targetIcon = '';
+                                                            $targetText = isset($metric['desiredSize']) ? ($metric['desiredSize'] == 'smaller' ? 'Lower is better' : 'Higher is better') : '';
+                                                            
+                                                            if($metric['name'] == 'Total Score') {
+                                                                $score = intval($metric['value']);
+                                                                if($score >= 90) {
+                                                                    $valueClass = 'text-green-600 dark:text-green-400 font-medium';
+                                                                    $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>';
+                                                                }
+                                                                elseif($score >= 70) {
+                                                                    $valueClass = 'text-yellow-600 dark:text-yellow-400 font-medium';
+                                                                    $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>';
+                                                                }
+                                                                else {
+                                                                    $valueClass = 'text-red-600 dark:text-red-400 font-medium';
+                                                                    $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>';
+                                                                }
+                                                            } else {
+                                                                if(isset($metric['desiredSize']) && $metric['desiredSize'] == 'smaller') {
+                                                                    $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>';
+                                                                } else {
+                                                                    $targetIcon = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>';
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+                                                            <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{{ htmlspecialchars($metric['name'] ?? '') }}</td>
+                                                            <td class="px-4 py-3 text-sm {{ $valueClass }} text-gray-800 dark:text-gray-200">{{ htmlspecialchars($metric['value'] ?? '') }}</td>
+                                                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 flex items-center">
+                                                                {!! $targetIcon !!}
+                                                                <span class="ml-1">{{ $targetText }}</span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <p class="text-gray-800 dark:text-gray-200">No metrics available for this page.</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <!-- Build Logs (Plain Text) -->
+                    <div class="mt-8">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Raw Build Logs</h4>
+                        <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-mono whitespace-pre-line text-gray-800 dark:text-gray-200 overflow-x-auto">
+                            {!! $formattedLogs !!}
+                        </div>
                     </div>
                 </div>
             </div>
