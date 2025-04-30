@@ -202,7 +202,7 @@
 @endsection
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -294,35 +294,42 @@
                 }
             });
             
-            // Branch Distribution Chart (if you have this chart)
-            if(document.getElementById('branchDistributionChart')) {
-                const branchCtx = document.getElementById('branchDistributionChart').getContext('2d');
-                new Chart(branchCtx, {
-                    type: 'horizontalBar',
-                    data: {
-                        labels: {!! json_encode($branches) !!},
-                        datasets: [{
-                            label: 'Builds',
-                            data: {!! json_encode($branchBuilds) !!},
-                            backgroundColor: '#8B5CF6', // purple-500
-                            borderWidth: 0
-                        }]
+            // Branch Activity Chart
+            const branchCtx = document.getElementById('branchChart').getContext('2d');
+            new Chart(branchCtx, {
+                type: 'bar', 
+                data: {
+                    labels: {!! json_encode($branches) !!},
+                    datasets: [{
+                        label: 'Builds',
+                        data: {!! json_encode($branchBuilds) !!},
+                        backgroundColor: '#8B5CF6', // purple-500
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
                     },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.x} builds`;
                                 }
                             }
                         }
                     }
-                });
-            }
+                }
+            });
         });
     </script>
 @endpush
