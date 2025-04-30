@@ -10,12 +10,6 @@ use Illuminate\Support\Facades\DB;
 
 // Dashboard route
 Route::get('/dashboard', function () {
-    // Get latest builds
-    $latestBuilds = Build::orderBy('completed_at', 'desc')
-                         ->take(10)
-                         ->get();
-    
-    // Build statistics
     $totalProjects = Build::distinct('repository')->count('repository');
     $successBuilds = Build::where('status', 'success')->count();
     $partialBuilds = Build::where('status', 'partial')->count();
@@ -45,13 +39,13 @@ Route::get('/dashboard', function () {
                         ->whereNotIn('status', ['queued', 'in_progress'])
                         ->groupBy('branch')
                         ->orderBy('count', 'desc')
+                        ->limit(5)
                         ->get();
 
     $branches = $branchData->pluck('branch')->toArray();
     $branchBuilds = $branchData->pluck('count')->toArray();
     
     return view('dashboard', compact(
-        'latestBuilds', 
         'totalProjects',
         'totalBuilds',
         'completedBuilds', 

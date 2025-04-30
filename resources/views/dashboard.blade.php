@@ -206,7 +206,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Build Status Distribution Chart with value labels
+            // Register the plugin
+            Chart.register(ChartDataLabels);
+            
+            // Build Status Distribution Chart
             const statusCtx = document.getElementById('buildStatusChart').getContext('2d');
             new Chart(statusCtx, {
                 type: 'pie',
@@ -252,8 +255,7 @@
                             }
                         }
                     }
-                },
-                plugins: [ChartDataLabels]
+                }
             });
 
             // Weekly Build Activity Chart
@@ -261,10 +263,10 @@
             new Chart(activityCtx, {
                 type: 'bar',
                 data: {
-                    labels: JSON.parse('{{ json_encode($dailyLabels) }}'), // Use the day names
+                    labels: {!! json_encode($dailyLabels) !!},
                     datasets: [{
                         label: 'Builds',
-                        data: JSON.parse('{{ json_encode($dailyBuilds) }}'),
+                        data: {!! json_encode($dailyBuilds) !!},
                         backgroundColor: '#3B82F6', // blue-500
                         borderWidth: 0
                     }]
@@ -291,6 +293,36 @@
                     }
                 }
             });
+            
+            // Branch Distribution Chart (if you have this chart)
+            if(document.getElementById('branchDistributionChart')) {
+                const branchCtx = document.getElementById('branchDistributionChart').getContext('2d');
+                new Chart(branchCtx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: {!! json_encode($branches) !!},
+                        datasets: [{
+                            label: 'Builds',
+                            data: {!! json_encode($branchBuilds) !!},
+                            backgroundColor: '#8B5CF6', // purple-500
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         });
     </script>
 @endpush
