@@ -290,7 +290,7 @@
                                     return `${context.parsed.y} builds`;
                                 }
                             }
-                        }
+                        },
                         datalabels: {
                             display: true,
                             color: '#ffffff', 
@@ -341,8 +341,7 @@
                                     return `${context.parsed.x} builds`;
                                 }
                             }
-                        }
-
+                        },
                         datalabels: {
                             display: true,
                             color: '#ffffff',
