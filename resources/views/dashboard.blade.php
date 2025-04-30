@@ -246,9 +246,10 @@
                         },
                         datalabels: {
                             display: true,
-                            color: '#fff',
+                            color: '#ffffff',
                             font: {
-                                weight: 'bold'
+                                weight: 'bold',
+                                size: 14
                             },
                             formatter: function(value, context) {
                                 return value;
@@ -290,6 +291,20 @@
                                 }
                             }
                         }
+                        datalabels: {
+                            display: true,
+                            color: '#ffffff', 
+                            font: {
+                                weight: 'bold'
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 4,
+                            formatter: function(value) {
+                                if (value > 0) return value; 
+                                return '';
+                            }
+                        }
                     }
                 }
             });
@@ -325,6 +340,20 @@
                                 label: function(context) {
                                     return `${context.parsed.x} builds`;
                                 }
+                            }
+                        }
+
+                        datalabels: {
+                            display: true,
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold'
+                            },
+                            anchor: 'end',
+                            align: 'right',
+                            formatter: function(value) {
+                                if (value > 0) return value; 
+                                return '';
                             }
                         }
                     }
