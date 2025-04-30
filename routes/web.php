@@ -65,7 +65,7 @@ Route::get('/dashboard', function () {
         'dailyBuilds',
         'branches',
         'branchBuilds',
-        'latestBuilds'  // Add the latestBuilds variable here
+        'latestBuilds'  
     ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
