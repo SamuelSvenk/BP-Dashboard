@@ -27,8 +27,8 @@ Route::get('/dashboard', function () {
         : 0;
     
 
-    $latestBuilds = Build::orderBy('created_at', 'desc')
-                        ->limit(5)
+    $latestBuilds = Build::orderBy('completed_at', 'desc')
+                        ->take(10)
                         ->get();
     
     // Daily builds (last 7 days)
