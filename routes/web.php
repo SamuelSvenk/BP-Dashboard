@@ -10,12 +10,14 @@ use Illuminate\Support\Facades\DB;
 
 // Dashboard route
 Route::get('/dashboard', function () {
+
     $totalProjects = Build::distinct('repository')->count('repository');
     $successBuilds = Build::where('status', 'success')->count();
     $partialBuilds = Build::where('status', 'partial')->count();
     $failedBuilds = Build::where('status', 'failed')->count();
     $inProgressBuilds = Build::whereIn('status', ['in_progress', 'queued'])->count();
     
+   
     $completedBuilds = $successBuilds + $partialBuilds;
     $totalBuilds = $completedBuilds + $failedBuilds + $inProgressBuilds;
     
@@ -23,6 +25,11 @@ Route::get('/dashboard', function () {
     $successRate = $totalFinishedBuilds > 0 
         ? round(($successBuilds / $totalFinishedBuilds) * 100) 
         : 0;
+    
+
+    $latestBuilds = Build::orderBy('created_at', 'desc')
+                        ->limit(5)
+                        ->get();
     
     // Daily builds (last 7 days)
     $dailyLabels = [];
@@ -58,7 +65,7 @@ Route::get('/dashboard', function () {
         'dailyBuilds',
         'branches',
         'branchBuilds',
-        'latestBuilds'
+        'latestBuilds'  // Add the latestBuilds variable here
     ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
