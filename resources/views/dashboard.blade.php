@@ -203,10 +203,10 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
-        // Wait for the document to be ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Build Status Distribution Chart
+            // Build Status Distribution Chart with value labels
             const statusCtx = document.getElementById('buildStatusChart').getContext('2d');
             new Chart(statusCtx, {
                 type: 'pie',
@@ -229,9 +229,31 @@
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            color: '#fff',
+                            font: {
+                                weight: 'bold'
+                            },
+                            formatter: function(value, context) {
+                                return value;
+                            }
                         }
                     }
-                }
+                },
+                plugins: [ChartDataLabels]
             });
 
             // Weekly Build Activity Chart
@@ -239,7 +261,7 @@
             new Chart(activityCtx, {
                 type: 'bar',
                 data: {
-                    labels: JSON.parse('{{ json_encode($dailyBuilds) }}'),
+                    labels: JSON.parse('{{ json_encode($dailyLabels) }}'), // Use the day names
                     datasets: [{
                         label: 'Builds',
                         data: JSON.parse('{{ json_encode($dailyBuilds) }}'),
@@ -257,43 +279,12 @@
                                 precision: 0
                             }
                         }
-                    }
-                }
-            });
-
-            // Branch Chart
-            const branchCtx = document.getElementById('branchChart').getContext('2d');
-            new Chart(branchCtx, {
-                type: 'bar',
-                data: {
-                    labels: JSON.parse('{!! json_encode($branches) !!}'),
-                    datasets: [{
-                        label: 'Builds',
-                        data: JSON.parse('{{ json_encode($branchBuilds) }}'),
-                        backgroundColor: '#8B5CF6', // purple-500
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            }
-                        }
                     },
                     plugins: {
-                        legend: {
-                            display: false
-                        },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.parsed.x} builds`;
+                                    return `${context.parsed.y} builds`;
                                 }
                             }
                         }
