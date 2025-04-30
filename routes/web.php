@@ -57,7 +57,8 @@ Route::get('/dashboard', function () {
         'dailyLabels',
         'dailyBuilds',
         'branches',
-        'branchBuilds'
+        'branchBuilds',
+        'latestBuilds'
     ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
