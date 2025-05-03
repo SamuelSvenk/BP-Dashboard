@@ -13,6 +13,9 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <!-- Favicon -->
+        <link rel="icon" href="data:image/png;base64,{{ file_get_contents(public_path('base64.txt')) }}" type="image/png">
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
